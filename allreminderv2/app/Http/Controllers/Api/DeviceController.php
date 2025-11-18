@@ -8,18 +8,15 @@ use Illuminate\Http\Request;
 
 class DeviceController extends Controller
 {
-    // GET /api/devices
     public function index()
     {
-        return Device::all();
+        // urządzenia tylko zalogowanego użytkownika
+        return Device::where('user_id', auth()->id())->get();
     }
-
-    // POST /api/devices
+    
     public function store(Request $request)
     {
-        // Walidacja danych wejściowych
         $validated = $request->validate([
-            'user_id'        => 'required|exists:users,id',
             'name'           => 'required|string|max:255',
             'category'       => 'nullable|string|max:255',
             'model'          => 'nullable|string|max:255',
@@ -27,11 +24,12 @@ class DeviceController extends Controller
             'purchase_date'  => 'nullable|date',
             'warranty_until' => 'nullable|date|after_or_equal:purchase_date',
         ]);
-
-        // Utworzenie urządzenia
-        $device = Device::create($validated);
-
-        // Zwracamy JSON + kod 201 (Created)
+    
+        $device = Device::create([
+            'user_id'        => auth()->id(),  // <- kluczowa zmiana
+            ...$validated,
+        ]);
+    
         return response()->json($device, 201);
     }
 }
